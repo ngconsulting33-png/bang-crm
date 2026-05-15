@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BANG Solution Trading — CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{
+  --bg:#f2f1ed;--surface:#fff;--surface2:#f7f6f2;--surface3:#eeecea;
+  --border:#e0ddd6;--border2:#eae8e3;
+  --text:#1a1814;--text2:#6b6760;--text3:#aaa49e;
+  --accent:#1c3a5e;--accent2:#2b5080;--accent-lt:#e8eef5;
+  --green:#1a7a4a;--green-lt:#e8f5ee;
+  --orange:#c06020;--orange-lt:#fef0e6;
+  --red:#b03030;--red-lt:#fdeaea;
+  --gold:#b08030;--gold-lt:#fdf4e7;
+  --shopify-c:#4a7010;--shopify-bg:#f0f7e0;--shopify-b:#c0d880;
+  --wix-c:#0c6ebd;--wix-bg:#e4f0fb;--wix-b:#90c4e8;
+  --r:12px;--rs:8px;
+  --sh:0 2px 12px rgba(0,0,0,0.07);--sh2:0 8px 32px rgba(0,0,0,0.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden;}
+.sidebar{width:252px;background:var(--accent);display:flex;flex-direction:column;flex-shrink:0;}
+.sb-logo{padding:24px 22px 18px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.sb-name{font-family:'Playfair Display',serif;font-size:16px;color:#fff;font-weight:700;line-height:1.3;}
+.sb-sub{font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
+.sb-nav{padding:12px 10px;flex:1;overflow-y:auto;}
+.nav-sec{font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:2px;text-transform:uppercase;padding:12px 12px 5px;margin-top:4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--rs);cursor:pointer;margin-bottom:2px;color:rgba(255,255,255,0.62);font-size:13px;font-weight:500;transition:all .15s;border:1px solid transparent;user-select:none;}
+.nav-item:hover{background:rgba(255,255,255,0.1);color:#fff;}
+.nav-item.active{background:rgba(255,255,255,0.16);color:#fff;border-color:rgba(255,255,255,0.15);}
+.sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,0.1);}
+.sync-row{display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(255,255,255,0.5);margin-top:6px;}
+.dot{width:7px;height:7px;border-radius:50%;background:#888;flex-shrink:0;transition:background .3s;}
+.dot.ok{background:#4cde88;}
+.dot.err{background:#e05555;}
+.dot.busy{background:#f0a040;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{padding:15px 26px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);box-shadow:0 1px 4px rgba(0,0,0,0.04);}
+.page-title{font-family:'Playfair Display',serif;font-size:23px;color:var(--accent);font-weight:600;}
+.content{flex:1;overflow-y:auto;padding:22px 26px;}
+.btn{padding:8px 16px;border-radius:var(--rs);border:none;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;font-size:12.5px;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
+.btn-p{background:var(--accent);color:#fff;}.btn-p:hover{background:var(--accent2);}
+.btn-s{background:var(--surface3);color:var(--text2);border:1px solid var(--border);}.btn-s:hover{background:var(--border);}
+.btn-d{background:var(--red-lt);color:var(--red);border:1px solid #f0c8c8;}
+.btn-g{background:var(--green-lt);color:var(--green);border:1px solid #b8e0cc;}
+.btn-o{background:var(--gold-lt);color:var(--gold);border:1px solid #e8d4a0;}
+.btn-cal{background:#e8f0ff;color:#3366cc;border:1px solid #b8ccf0;}
+.btn-sm{padding:4px 11px;font-size:11px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;box-shadow:var(--sh);}
+.card-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--accent);font-weight:600;margin-bottom:14px;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:18px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);border-top:3px solid var(--accent);}
+.stat-val{font-family:'Playfair Display',serif;font-size:26px;color:var(--accent);line-height:1;margin-bottom:3px;margin-top:8px;}
+.stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;}
+.stat-sub{margin-top:6px;font-size:11px;color:var(--text3);}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;padding:9px 13px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--surface2);}
+td{padding:11px 13px;border-bottom:1px solid var(--border2);font-size:13px;vertical-align:middle;}
+tr:hover td{background:var(--surface2);}
+tr:last-child td{border-bottom:none;}
+.toolbar{display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap;}
+.search-input{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:8px 13px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;flex:1;min-width:180px;outline:none;box-shadow:var(--sh);}
+.search-input:focus{border-color:var(--accent);}
+select.fsel{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:8px 13px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;outline:none;cursor:pointer;box-shadow:var(--sh);}
+.modal-bg{position:fixed;inset:0;background:rgba(20,16,10,0.45);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(3px);}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh2);}
+.modal-title{font-family:'Playfair Display',serif;font-size:19px;color:var(--accent);margin-bottom:20px;font-weight:600;}
+.frow{margin-bottom:13px;}
+.flabel{display:block;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;font-weight:600;}
+.finput,.fsel2,.ftxt{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 13px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;width:100%;outline:none;transition:border-color .15s;}
+.finput:focus,.fsel2:focus,.ftxt:focus{border-color:var(--accent);background:var(--surface);}
+.ftxt{resize:vertical;min-height:68px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+.fsec{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;font-weight:700;padding:14px 0 8px;border-top:1px solid var(--border);margin-top:6px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.four-col{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.detail{position:fixed;right:0;top:0;bottom:0;width:400px;background:var(--surface);border-left:1px solid var(--border);z-index:100;overflow-y:auto;padding:22px;box-shadow:-4px 0 20px rgba(0,0,0,0.09);}
+.d-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.d-field{border-bottom:1px solid var(--border2);padding:10px 0;}
+.d-label{font-size:9.5px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;font-weight:700;}
+.d-val{font-size:13px;}
+.kanban{display:flex;gap:13px;overflow-x:auto;padding-bottom:12px;}
+.k-col{min-width:200px;flex:1;}
+.k-hdr{display:flex;align-items:center;gap:7px;margin-bottom:9px;}
+.k-dot{width:9px;height:9px;border-radius:50%;}
+.k-label{font-weight:600;font-size:12px;color:var(--text2);}
+.k-total{margin-left:auto;font-size:10.5px;color:var(--text3);}
+.deal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:9px;border-left-width:3px;transition:all .12s;box-shadow:var(--sh);}
+.deal-card:hover{transform:translateY(-2px);box-shadow:var(--sh2);}
+.prob-bar{height:3px;background:var(--border);border-radius:99px;margin-top:7px;}
+.prob-fill{height:100%;border-radius:99px;}
+.rdv-item{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--border2);align-items:flex-start;}
+.rdv-chk{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;margin-top:3px;}
+.hist-item{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--border2);}
+.hist-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:5px;}
+.app-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:11px;}
+.app-box-name{font-weight:700;font-size:12px;margin-bottom:7px;color:var(--accent);}
+.app-plan-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px solid var(--border2);}
+.app-plan-row:last-child{border-bottom:none;}
+.tag-pill{display:inline-block;padding:2px 9px;background:var(--accent-lt);color:var(--accent);border-radius:99px;font-size:10.5px;margin:2px;font-weight:500;}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);color:#fff;padding:11px 22px;border-radius:99px;font-size:13px;font-weight:500;z-index:9999;box-shadow:var(--sh2);animation:tin .22s ease;}
+@keyframes tin{from{opacity:0;transform:translateX(-50%) translateY(14px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.page{animation:fin .18s ease;}
+@keyframes fin{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:none;}}
+.hidden{display:none!important;}
+::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+.prime-box{background:#fffdf0;border:2px solid #c09020;border-radius:var(--r);padding:20px;margin-bottom:16px;}
+.cfg-input{background:#fff;border:1px solid var(--border);border-radius:var(--rs);padding:8px 13px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;width:100%;outline:none;}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-name">BANG Solution<br>Trading</div>
+    <div class="sb-sub">CRM &middot; Apps Shopify &amp; Wix</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-sec">Menu principal</div>
+    <div class="nav-item active" onclick="go('dashboard')"><span>&#8862;</span> Tableau de bord</div>
+    <div class="nav-item" onclick="go('agences')"><span>&#127970;</span> Agences</div>
+    <div class="nav-item" onclick="go('pipeline')"><span>&#9638;</span> Pipeline</div>
+    <div class="nav-item" onclick="go('rdv')"><span>&#128197;</span> Rendez-vous</div>
+    <div class="nav-item" onclick="go('revenus')"><span>&#128182;</span> Revenus apps</div>
+    <div class="nav-sec">Export</div>
+    <div class="nav-item" onclick="exportExcel()"><span>&#128229;</span> Exporter Excel</div>
+    <div class="nav-item" onclick="exportICS()"><span>&#128198;</span> Google Agenda</div>
+    <div class="nav-sec">Donnees</div>
+    <div class="nav-item" onclick="exportJSON()"><span>&#128190;</span> Sauvegarder</div>
+    <div class="nav-item" onclick="document.getElementById('imp').click()"><span>&#128194;</span> Restaurer</div>
+    <div class="nav-item" onclick="go('config')"><span>&#9881;</span> Configuration</div>
+    <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
+  </nav>
+  <div class="sb-foot">
+    <div style="font-size:11.5px;font-weight:600;color:#fff" id="sbCount">0 agences</div>
+    <div class="sync-row"><div class="dot" id="syncDot"></div><span id="syncTxt">Connexion...</span></div>
+  </div>
+</div>
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">Tableau de bord</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:11.5px;color:var(--text3)" id="todayDate"></span>
+      <button class="btn btn-p btn-sm hidden" id="topBtn" onclick="topAction()"></button>
+    </div>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+<div class="detail hidden" id="detailPanel"></div>
+<div id="MC"></div>
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+var SUPA_URL = 'https://pmynkoxjsswozccaozjc.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBteW5rb3hqc3N3b3pjY2FvempjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMDAyNzMsImV4cCI6MjA5MjU3NjI3M30.NlI-0C5tKqHFJFBc5jF-rQlrmcN-kvfCyQ1C7HT4q2g';
+
+var APPS = {
+  hexaship:{name:'Hexaship',plat:'shopify',color:'#4a7010',bg:'#f0f7e0',border:'#c0d880',plans:['Basic','Grow','Advanced','Plus']},
+  survey:{name:'Survey App',plat:'wix',color:'#0c6ebd',bg:'#e4f0fb',border:'#90c4e8',plans:['Unique']},
+  panier:{name:'Abandon Panier',plat:'wix',color:'#0c6ebd',bg:'#e4f0fb',border:'#90c4e8',plans:['Unique']}
+};
+
+var STAGES = ['Prospection','Premier contact','Demo','Proposition','Negociation','Signe','Perdu'];
+var STAGE_LABELS = {Prospection:'Prospection','Premier contact':'1er contact',Demo:'D\u00e9mo',Proposition:'Proposition',Negociation:'N\u00e9gociation',Signe:'Sign\u00e9',Perdu:'Perdu'};
+var STAGE_COLORS = {Prospection:'#7a8aaa','Premier contact':'#5588cc',Demo:'#c09020',Proposition:'#d07020',Negociation:'#b05010',Signe:'#1a7a4a',Perdu:'#b03030'};
+var STATUS_CFG = {
+  Actif:{bg:'#e8f5ee',color:'#1a7a4a',border:'#b8e0cc'},
+  Prospect:{bg:'#fef0e6',color:'#c06020',border:'#f0cca8'},
+  Inactif:{bg:'#f4f3ef',color:'#a8a49e',border:'#dcdad5'},
+  Client:{bg:'#e8eef8',color:'#1a50aa',border:'#b8ccf0'}
+};
+
+// ============================================================
+// DEFAULT DATA
+// ============================================================
+function emptyAppSubs(){
+  return {
+    hexaship:{Basic:0,Grow:0,Advanced:0,Plus:0},
+    survey:{Unique:0},
+    panier:{Unique:0}
+  };
+}
+function emptyAppDates(){
+  return {
+    hexaship:{Basic:'',Grow:'',Advanced:'',Plus:''},
+    survey:{Unique:''},
+    panier:{Unique:''}
+  };
+}
+
+var DEFAULT_DB = {
+  agences:[
+    {id:1,name:'Agence Pixel',contact:'Julie Bernard',email:'julie@agencepixel.fr',phone:'06 11 22 33 44',platform:'shopify',status:'Prospect',ca:250000,employees:8,apps:['hexaship'],appSubs:{hexaship:{Basic:3,Grow:2,Advanced:1,Plus:0},survey:{Unique:0},panier:{Unique:0}},appDates:{hexaship:{Basic:'2025-10-01',Grow:'2025-10-01',Advanced:'2025-10-01',Plus:''},survey:{Unique:''},panier:{Unique:''}},notes:'Specialis\u00e9e mode. Int\u00e9ress\u00e9e par Hexaship.',history:[{date:'2026-04-20',text:'Premier contact email'},{date:'2026-04-15',text:'D\u00e9couverte LinkedIn'}],lastContact:'2026-04-20',tags:'Chaud,Mode'},
+    {id:2,name:'WebCraft Studio',contact:'Arnaud Morel',email:'arnaud@webcraft.fr',phone:'07 55 66 77 88',platform:'wix',status:'Client',ca:180000,employees:5,apps:['survey','panier'],appSubs:{hexaship:{Basic:0,Grow:0,Advanced:0,Plus:0},survey:{Unique:4},panier:{Unique:2}},appDates:{hexaship:{Basic:'',Grow:'',Advanced:'',Plus:''},survey:{Unique:'2025-09-15'},panier:{Unique:'2025-11-01'}},notes:'Agence Wix pure.',history:[{date:'2026-04-18',text:'Renouvellement Survey +2 clients'},{date:'2026-02-20',text:'Signature Survey App'}],lastContact:'2026-04-18',tags:'VIP,Wix'},
+    {id:3,name:'Novastyle Agency',contact:'Clara Dupont',email:'clara@novastyle.agency',phone:'06 99 88 77 66',platform:'both',status:'Prospect',ca:420000,employees:15,apps:[],appSubs:emptyAppSubs(),appDates:emptyAppDates(),notes:'Grande agence mixte. Fort potentiel.',history:[{date:'2026-04-19',text:'D\u00e9mo planifi\u00e9e 30/04'}],lastContact:'2026-04-19',tags:'Grands comptes,Chaud'}
+  ],
+  deals:[
+    {id:1,title:'Hexaship Agence Pixel',agenceId:1,app:'hexaship',value:1200,stage:'Demo',probability:60,closeDate:'2026-05-20',notes:'Demo prevue'},
+    {id:2,title:'Survey + Panier Novastyle',agenceId:3,app:'survey',value:3500,stage:'Proposition',probability:45,closeDate:'2026-06-01',notes:'Toutes apps'},
+    {id:3,title:'Renouvellement WebCraft',agenceId:2,app:'panier',value:2400,stage:'Signe',probability:100,closeDate:'2026-04-18',notes:'Signe !'}
+  ],
+  rdvs:[
+    {id:1,type:'Demo',agenceId:1,contact:'Julie Bernard',date:'2026-04-30',heure:'14:00',note:'Demo Hexaship logistique mode',done:false,exportCal:false},
+    {id:2,type:'Reunion',agenceId:3,contact:'Clara Dupont',date:'2026-05-03',heure:'10:00',note:'Presentation 3 apps Novastyle',done:false,exportCal:false},
+    {id:3,type:'Appel',agenceId:2,contact:'Arnaud Morel',date:'2026-04-22',heure:'11:00',note:'Point renouvellement WebCraft',done:true,exportCal:false}
+  ],
+  primesDone:[],
+  config:{
+    prices:{hexaship:{Basic:29,Grow:59,Advanced:99,Plus:199},survey:{Unique:19},panier:{Unique:29}},
+    primeAmount:50
+  }
+};
+
+var DB = JSON.parse(JSON.stringify(DEFAULT_DB));
+var currentPage = 'dashboard';
+var searchQ = '';
+var filterPlat = 'all';
+var filterSt = 'all';
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmt(n){
+  return new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n);
+}
+function fmtDate(d){
+  if(!d) return '--';
+  return new Date(d+'T12:00:00').toLocaleDateString('fr-FR');
+}
+function nextId(arr){
+  if(!arr.length) return 1;
+  return Math.max.apply(null, arr.map(function(x){return x.id;})) + 1;
+}
+var AVC = ['#1c3a5e','#2a6050','#5a3060','#6a4020','#204060','#3a4a20'];
+function avColor(name){return AVC[name.charCodeAt(0) % AVC.length];}
+function inits(name){return name.split(' ').map(function(p){return p[0];}).join('').slice(0,2).toUpperCase();}
+
+function ava(name, size){
+  size = size || 34;
+  return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+avColor(name)+';display:flex;align-items:center;justify-content:center;font-family:Playfair Display,serif;font-weight:700;font-size:'+(size*0.36)+'px;color:#fff;flex-shrink:0">'+inits(name)+'</div>';
+}
+
+function badge(text, cfg){
+  return '<span style="display:inline-block;padding:2px 9px;border-radius:99px;font-size:10.5px;font-weight:600;background:'+cfg.bg+';color:'+cfg.color+';border:1px solid '+cfg.border+'">'+text+'</span>';
+}
+
+function platBadge(plat){
+  if(plat === 'shopify') return '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:var(--shopify-bg);color:var(--shopify-c);border:1px solid var(--shopify-b)">Shopify</span>';
+  if(plat === 'wix') return '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:var(--wix-bg);color:var(--wix-c);border:1px solid var(--wix-b)">Wix</span>';
+  if(plat === 'both') return '<span style="display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#f0eaf8;color:#6030a0;border:1px solid #d0b8f0">Shopify + Wix</span>';
+  return '';
+}
+
+function stageBadge(s){
+  var c = STAGE_COLORS[s] || '#888';
+  var lbl = STAGE_LABELS[s] || s;
+  return '<span style="display:inline-block;padding:2px 9px;border-radius:99px;font-size:10.5px;font-weight:600;background:'+c+'18;color:'+c+';border:1px solid '+c+'30">'+lbl+'</span>';
+}
+
+function appBadge(key){
+  var a = APPS[key];
+  if(!a) return '';
+  return '<span style="display:inline-block;padding:2px 9px;border-radius:99px;font-size:10.5px;font-weight:600;background:'+a.bg+';color:'+a.color+';border:1px solid '+a.border+'">'+a.name+'</span>';
+}
+
+function getPrice(app, plan){
+  var p = DB.config.prices;
+  if(p && p[app] && p[app][plan]) return p[app][plan];
+  return 0;
+}
+function getPrimeAmount(){return DB.config.primeAmount != null ? DB.config.primeAmount : 50;}
+
+function toast(msg, ok){
+  if(ok === undefined) ok = true;
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.style.background = ok ? 'var(--accent)' : 'var(--red)';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove();}, 2800);
+}
+
+// ============================================================
+// SUPABASE
+// ============================================================
+var supa = null;
+var supaOK = false;
+var syncing = false;
+var reloadTimer = null;
+
+function initSupa(){
+  try{
+    if(typeof supabase === 'undefined') return false;
+    supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+    supaOK = true;
+    setSyncStatus('busy','Connexion...');
+    return true;
+  } catch(e){ supaOK = false; return false; }
+}
+
+function setSyncStatus(state, txt){
+  var dot = document.getElementById('syncDot');
+  var span = document.getElementById('syncTxt');
+  if(!dot) return;
+  dot.className = 'dot' + (state === 'ok' ? ' ok' : state === 'err' ? ' err' : ' busy');
+  if(span) span.textContent = txt || '';
+}
+
+async function loadSupa(){
+  if(!supa) return false;
+  try{
+    setSyncStatus('busy','Chargement...');
+    var ag = await supa.from('agences').select('*').order('id');
+    var dl = await supa.from('deals').select('*').order('id');
+    var rv = await supa.from('rdvs').select('*').order('id');
+    var cfg = await supa.from('config').select('*').limit(1);
+    if(ag.error) throw ag.error;
+    DB.agences = ag.data.map(function(r){ var d = r.data; d._sid = r.id; return d; });
+    DB.deals = dl.data.map(function(r){ var d = r.data; d._sid = r.id; return d; });
+    DB.rdvs = rv.data.map(function(r){ var d = r.data; d._sid = r.id; return d; });
+    if(cfg.data && cfg.data.length > 0){
+      var c = cfg.data[0].data;
+      DB.config = c.config || DB.config;
+      DB.primesDone = c.primesDone || [];
+    }
+    saveLocal();
+    setSyncStatus('ok','Supabase connecte');
+    return true;
+  } catch(e){
+    console.warn('Supabase load error:', e);
+    setSyncStatus('err','Hors ligne (local)');
+    return false;
+  }
+}
+
+async function saveSupa(){
+  if(!supa || syncing) return;
+  syncing = true;
+  setSyncStatus('busy','Sync...');
+  try{
+    var i, r, res;
+    for(i = 0; i < DB.agences.length; i++){
+      var a = DB.agences[i];
+      var sid = a._sid;
+      var data = {}; for(var k in a){ if(k !== '_sid') data[k] = a[k]; }
+      if(sid){ await supa.from('agences').update({data:data}).eq('id',sid); }
+      else{ res = await supa.from('agences').insert({data:data}).select().single(); if(res.data) a._sid = res.data.id; }
+    }
+    for(i = 0; i < DB.deals.length; i++){
+      var d = DB.deals[i];
+      var dsid = d._sid;
+      var ddata = {}; for(var dk in d){ if(dk !== '_sid') ddata[dk] = d[dk]; }
+      if(dsid){ await supa.from('deals').update({data:ddata}).eq('id',dsid); }
+      else{ res = await supa.from('deals').insert({data:ddata}).select().single(); if(res.data) d._sid = res.data.id; }
+    }
+    for(i = 0; i < DB.rdvs.length; i++){
+      r = DB.rdvs[i];
+      var rsid = r._sid;
+      var rdata = {}; for(var rk in r){ if(rk !== '_sid') rdata[rk] = r[rk]; }
+      if(rsid){ await supa.from('rdvs').update({data:rdata}).eq('id',rsid); }
+      else{ res = await supa.from('rdvs').insert({data:rdata}).select().single(); if(res.data) r._sid = res.data.id; }
+    }
+    // Save config
+    var cfgPayload = {config: DB.config, primesDone: DB.primesDone};
+    var existing = await supa.from('config').select('id').limit(1);
+    if(existing.data && existing.data.length > 0){
+      await supa.from('config').update({data:cfgPayload}).eq('id', existing.data[0].id);
+    } else {
+      await supa.from('config').insert({data:cfgPayload});
+    }
+    saveLocal();
+    setSyncStatus('ok','Supabase connecte');
+  } catch(e){
+    console.warn('Supabase save error:', e);
+    setSyncStatus('err','Erreur sync');
+    toast('Erreur sync - donnees sauvees localement', false);
+  }
+  syncing = false;
+}
+
+function subscribeSupa(){
+  if(!supa) return;
+  supa.channel('bang-crm')
+    .on('postgres_changes',{event:'*',schema:'public',table:'agences'},reloadDebounce)
+    .on('postgres_changes',{event:'*',schema:'public',table:'deals'},reloadDebounce)
+    .on('postgres_changes',{event:'*',schema:'public',table:'rdvs'},reloadDebounce)
+    .subscribe(function(s){ if(s === 'SUBSCRIBED') setSyncStatus('ok','Supabase connecte'); });
+}
+
+function reloadDebounce(){
+  clearTimeout(reloadTimer);
+  reloadTimer = setTimeout(async function(){
+    await loadSupa();
+    injectPrimes();
+    render();
+    toast('Donnees synchronisees');
+  }, 800);
+}
+
+// ============================================================
+// LOCAL STORAGE
+// ============================================================
+var SK = 'bang_crm_v4';
+function saveLocal(){ try{ localStorage.setItem(SK, JSON.stringify(DB)); }catch(e){} }
+function loadLocal(){
+  try{
+    var r = localStorage.getItem(SK);
+    if(r){ var d = JSON.parse(r); if(d.agences && d.deals && d.rdvs){ DB = d; return true; } }
+  } catch(e){}
+  return false;
+}
+function saveAll(){ saveLocal(); if(supaOK) saveSupa(); }
+
+// ============================================================
+// PRIMES
+// ============================================================
+function computePrimes(){
+  var today = new Date();
+  var primes = [];
+  DB.agences.forEach(function(ag){
+    if(!ag.appDates) return;
+    Object.keys(ag.appDates).forEach(function(appKey){
+      var plans = ag.appDates[appKey];
+      Object.keys(plans).forEach(function(plan){
+        var dateStr = plans[plan];
+        if(!dateStr) return;
+        var start = new Date(dateStr);
+        var months = (today.getFullYear() - start.getFullYear()) * 12 + (today.getMonth() - start.getMonth());
+        var count = (ag.appSubs && ag.appSubs[appKey] && ag.appSubs[appKey][plan]) || 0;
+        if(count > 0 && months >= 6){
+          var key = 'prime_' + ag.id + '_' + appKey + '_' + plan;
+          var done = (DB.primesDone || []).indexOf(key) >= 0;
+          primes.push({agenceId:ag.id,agenceName:ag.name,appKey:appKey,appName:(APPS[appKey]?APPS[appKey].name:appKey),plan:plan,count:count,months:months,amount:getPrimeAmount()*count,key:key,done:done});
+        }
+      });
+    });
+  });
+  return primes;
+}
+
+function injectPrimes(){
+  var primes = computePrimes().filter(function(p){ return !p.done; });
+  primes.forEach(function(p){
+    var note = 'PRIME a verser : ' + p.agenceName + ' - ' + p.appName + ' Plan ' + p.plan;
+    var exists = DB.rdvs.some(function(r){ return r.note === note && !r.done; });
+    if(!exists){
+      DB.rdvs.unshift({id:nextId(DB.rdvs),type:'Prime',agenceId:p.agenceId,contact:'',note:note,date:new Date().toISOString().slice(0,10),heure:'',done:false,exportCal:false,isPrime:true});
+    }
+  });
+}
+
+function markPrimeDone(key){
+  if(!DB.primesDone) DB.primesDone = [];
+  if(DB.primesDone.indexOf(key) < 0) DB.primesDone.push(key);
+  saveAll(); render(); toast('Prime marquee comme versee');
+}
+
+function resetPrimes(){
+  if(!confirm('Reinitialiser toutes les primes versees ?')) return;
+  DB.primesDone = [];
+  saveAll(); render(); toast('Primes reinitialisees');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+var PAGE_TITLES = {dashboard:'Tableau de bord',agences:'Agences',pipeline:'Pipeline commercial',rdv:'Rendez-vous',revenus:'Revenus apps',config:'Configuration'};
+var TOP_BTN = {agences:'+ Nouvelle agence',pipeline:'+ Nouvelle affaire',rdv:'+ Nouveau RDV'};
+
+function go(page){
+  currentPage = page;
+  document.getElementById('detailPanel').classList.add('hidden');
+  document.querySelectorAll('.nav-item').forEach(function(el){ el.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(el){
+    var txt = el.textContent.toLowerCase();
+    if(page === 'dashboard' && txt.indexOf('tableau') >= 0) el.classList.add('active');
+    else if(page === 'agences' && txt.indexOf('agence') >= 0) el.classList.add('active');
+    else if(page === 'pipeline' && txt.indexOf('pipeline') >= 0) el.classList.add('active');
+    else if(page === 'rdv' && txt.indexOf('rendez') >= 0) el.classList.add('active');
+    else if(page === 'revenus' && txt.indexOf('revenus') >= 0) el.classList.add('active');
+    else if(page === 'config' && txt.indexOf('config') >= 0) el.classList.add('active');
+  });
+  document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || '';
+  var tb = document.getElementById('topBtn');
+  if(TOP_BTN[page]){ tb.textContent = TOP_BTN[page]; tb.classList.remove('hidden'); }
+  else tb.classList.add('hidden');
+  render();
+}
+
+function topAction(){
+  if(currentPage === 'agences') openAddAgence();
+  else if(currentPage === 'pipeline') openAddDeal();
+  else if(currentPage === 'rdv') openAddRdv();
+}
+
+function render(){
+  document.getElementById('sbCount').textContent = DB.agences.length + ' agence' + (DB.agences.length > 1 ? 's' : '');
+  var el = document.getElementById('content');
+  if(currentPage === 'dashboard') el.innerHTML = pgDashboard();
+  else if(currentPage === 'agences') el.innerHTML = pgAgences();
+  else if(currentPage === 'pipeline') el.innerHTML = pgPipeline();
+  else if(currentPage === 'rdv') el.innerHTML = pgRdv();
+  else if(currentPage === 'revenus') el.innerHTML = pgRevenus();
+  else if(currentPage === 'config') el.innerHTML = pgConfig();
+}
+
+function saveRender(){ saveAll(); injectPrimes(); render(); }
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function pgDashboard(){
+  var pipeline = DB.deals.filter(function(d){ return d.stage !== 'Perdu' && d.stage !== 'Signe'; }).reduce(function(s,d){ return s+d.value; }, 0);
+  var won = DB.deals.filter(function(d){ return d.stage === 'Signe'; }).reduce(function(s,d){ return s+d.value; }, 0);
+  var clients = DB.agences.filter(function(a){ return a.status === 'Client'; }).length;
+  var totalSubs = 0;
+  DB.agences.forEach(function(a){ Object.keys(a.appSubs||{}).forEach(function(k){ Object.keys(a.appSubs[k]).forEach(function(p){ totalSubs += a.appSubs[k][p]; }); }); });
+  var todoRdv = DB.rdvs.filter(function(r){ return !r.done; }).length;
+
+  var primes = computePrimes().filter(function(p){ return !p.done; });
+  var primeBox = '';
+  if(primes.length > 0){
+    var primeRows = primes.map(function(p){
+      return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0e0a0">'+
+        '<div style="flex:1"><div style="font-weight:600;font-size:13px">'+p.agenceName+'</div>'+
+        '<div style="font-size:11.5px;color:#a08030">'+p.appName+' - Plan '+p.plan+' - '+p.count+' client'+(p.count>1?'s':'')+' - '+p.months+' mois</div></div>'+
+        '<div style="font-family:Playfair Display,serif;font-size:17px;color:#8a6010;font-weight:700">'+fmt(p.amount)+'</div>'+
+        '<button class="btn btn-sm" style="background:#fdf4e7;color:#8a6010;border:1px solid #e0c070" onclick="markPrimeDone(\''+p.key+'\')">Versee</button>'+
+        '</div>';
+    }).join('');
+    primeBox = '<div class="prime-box"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-size:20px">&#127942;</span><div style="font-family:Playfair Display,serif;font-size:15px;color:#8a6010;font-weight:600">Primes agences a verser - '+primes.length+' rappel'+(primes.length>1?'s':'')+'</div></div>'+primeRows+'<div style="font-size:11px;color:#a08030;margin-top:10px">Prime de '+fmt(getPrimeAmount())+' par client ayant atteint 6 mois - montant modifiable dans Configuration</div></div>';
+  }
+
+  var recentAg = DB.agences.slice(0,5).map(function(a){
+    return '<div style="display:flex;align-items:center;gap:11px;margin-bottom:11px;cursor:pointer" onclick="openDetail('+a.id+')">'+ava(a.name,32)+
+      '<div style="flex:1"><div style="font-weight:600;font-size:13px">'+a.name+'</div><div style="font-size:11px;color:var(--text3)">'+a.contact+'</div></div>'+
+      platBadge(a.platform)+' '+badge(a.status, STATUS_CFG[a.status]||STATUS_CFG.Prospect)+'</div>';
+  }).join('');
+
+  var recentRdv = DB.rdvs.filter(function(r){ return !r.done; }).slice(0,5).map(function(r){
+    var ag = DB.agences.find(function(a){ return a.id === r.agenceId; });
+    return '<div style="display:flex;gap:10px;margin-bottom:11px"><span style="font-size:16px">&#128197;</span>'+
+      '<div style="flex:1"><div style="font-size:13px;font-weight:600">'+r.note+'</div>'+
+      '<div style="font-size:11px;color:var(--text3)">'+(ag?ag.name:'--')+' - '+fmtDate(r.date)+(r.heure?' a '+r.heure:'')+'</div></div>'+
+      '<span style="display:inline-block;padding:2px 9px;border-radius:99px;font-size:10px;background:var(--accent-lt);color:var(--accent);border:1px solid #c0d4f0">'+r.type+'</span></div>';
+  }).join('') || '<div style="color:var(--text3);font-size:13px">Aucun RDV a venir</div>';
+
+  var stageBoxes = STAGES.map(function(s){
+    var sd = DB.deals.filter(function(d){ return d.stage === s; });
+    var tot = sd.reduce(function(x,d){ return x+d.value; }, 0);
+    var c = STAGE_COLORS[s];
+    return '<div style="flex:1;min-width:95px;background:var(--surface2);border-radius:var(--r);padding:12px 10px;border-top:3px solid '+c+'">'+
+      '<div style="font-size:9.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">'+STAGE_LABELS[s]+'</div>'+
+      '<div style="font-family:Playfair Display,serif;font-size:17px;color:var(--accent)">'+fmt(tot)+'</div>'+
+      '<div style="font-size:10px;color:var(--text3);margin-top:2px">'+sd.length+' aff.</div></div>';
+  }).join('');
+
+  return '<div class="page">'+
+    primeBox+
+    '<div class="stat-grid">'+
+    '<div class="stat-card"><div style="font-size:17px">&#127970;</div><div class="stat-val">'+DB.agences.length+'</div><div class="stat-label">Agences suivies</div><div class="stat-sub">'+clients+' clients actifs</div></div>'+
+    '<div class="stat-card" style="border-top-color:var(--green)"><div style="font-size:17px">&#128182;</div><div class="stat-val">'+fmt(won)+'</div><div class="stat-label">Revenus signes</div><div class="stat-sub">MRR actuel</div></div>'+
+    '<div class="stat-card" style="border-top-color:var(--orange)"><div style="font-size:17px">&#9638;</div><div class="stat-val">'+fmt(pipeline)+'</div><div class="stat-label">Pipeline actif</div><div class="stat-sub">'+DB.deals.filter(function(d){return d.stage!=='Perdu'&&d.stage!=='Signe';}).length+' affaires</div></div>'+
+    '<div class="stat-card" style="border-top-color:var(--gold)"><div style="font-size:17px">&#128242;</div><div class="stat-val">'+totalSubs+'</div><div class="stat-label">Abonnements apps</div><div class="stat-sub">'+todoRdv+' RDV a venir</div></div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">'+
+    '<div class="card"><div class="card-title">Agences recentes</div>'+recentAg+'</div>'+
+    '<div class="card"><div class="card-title">Prochains RDV</div>'+recentRdv+'</div>'+
+    '</div>'+
+    '<div class="card"><div class="card-title">Pipeline par etape</div><div style="display:flex;gap:9px;flex-wrap:wrap">'+stageBoxes+'</div></div>'+
+    '</div>';
+}
+
+// ============================================================
+// AGENCES
+// ============================================================
+function pgAgences(){
+  var q = searchQ.toLowerCase();
+  var filtered = DB.agences.filter(function(a){
+    var ms = !q || [a.name,a.contact,a.email].some(function(v){ return v && v.toLowerCase().indexOf(q) >= 0; });
+    var mp = filterPlat === 'all' || a.platform === filterPlat;
+    var mst = filterSt === 'all' || a.status === filterSt;
+    return ms && mp && mst;
+  });
+
+  var rows = filtered.length === 0 ?
+    '<tr><td colspan="7" style="text-align:center;padding:44px;color:var(--text3)">Aucune agence trouvee</td></tr>' :
+    filtered.map(function(a){
+      var appBadges = (a.apps||[]).map(appBadge).join(' ');
+      return '<tr style="cursor:pointer" onclick="openDetail('+a.id+')">'+
+        '<td><div style="display:flex;align-items:center;gap:10px">'+ava(a.name,30)+
+        '<div><div style="font-weight:600;font-size:13px">'+a.name+'</div><div style="font-size:11px;color:var(--text3)">'+a.contact+'</div></div></div></td>'+
+        '<td>'+platBadge(a.platform)+'</td>'+
+        '<td>'+badge(a.status, STATUS_CFG[a.status]||STATUS_CFG.Prospect)+'</td>'+
+        '<td>'+appBadges+'</td>'+
+        '<td><strong style="font-family:Playfair Display,serif;font-size:14px;color:var(--accent)">'+fmt(a.ca||0)+'</strong></td>'+
+        '<td style="color:var(--text3);font-size:12px">'+fmtDate(a.lastContact)+'</td>'+
+        '<td style="white-space:nowrap">'+
+        '<button class="btn btn-sm btn-s" onclick="event.stopPropagation();openEditAgence('+a.id+')">&#9999;</button> '+
+        '<button class="btn btn-sm btn-d" onclick="event.stopPropagation();deleteAgence('+a.id+')">&#10005;</button></td>'+
+        '</tr>';
+    }).join('');
+
+  return '<div class="page">'+
+    '<div class="toolbar">'+
+    '<input class="search-input" placeholder="Rechercher une agence..." value="'+searchQ+'" oninput="searchQ=this.value;render()">'+
+    '<select class="fsel" onchange="filterPlat=this.value;render()">'+
+    '<option value="all"'+(filterPlat==='all'?' selected':'')+'>Toutes plateformes</option>'+
+    '<option value="shopify"'+(filterPlat==='shopify'?' selected':'')+'>Shopify</option>'+
+    '<option value="wix"'+(filterPlat==='wix'?' selected':'')+'>Wix</option>'+
+    '<option value="both"'+(filterPlat==='both'?' selected':'')+'>Shopify + Wix</option>'+
+    '</select>'+
+    '<select class="fsel" onchange="filterSt=this.value;render()">'+
+    '<option value="all"'+(filterSt==='all'?' selected':'')+'>Tous statuts</option>'+
+    Object.keys(STATUS_CFG).map(function(s){ return '<option value="'+s+'"'+(filterSt===s?' selected':'')+'>'+s+'</option>'; }).join('')+
+    '</select>'+
+    '<button class="btn btn-p" onclick="openAddAgence()">+ Nouvelle agence</button>'+
+    '</div>'+
+    '<div class="card" style="padding:0;overflow:hidden"><div class="table-wrap"><table>'+
+    '<thead><tr><th>Agence</th><th>Plateforme</th><th>Statut</th><th>Apps</th><th>CA estime</th><th>Dernier contact</th><th></th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table></div></div></div>';
+}
+
+function openDetail(id){
+  var a = DB.agences.find(function(x){ return x.id === id; });
+  if(!a) return;
+  var panel = document.getElementById('detailPanel');
+  panel.classList.remove('hidden');
+  var aDeals = DB.deals.filter(function(d){ return d.agenceId === a.id; });
+  var today = new Date();
+
+  var subsHTML = Object.keys(a.appSubs||{}).map(function(key){
+    var plans = a.appSubs[key];
+    var app = APPS[key];
+    if(!app) return '';
+    var total = Object.keys(plans).reduce(function(s,p){ return s+plans[p]; }, 0);
+    if(!total) return '';
+    var planRows = Object.keys(plans).filter(function(p){ return plans[p] > 0; }).map(function(p){
+      var n = plans[p];
+      var price = getPrice(key, p);
+      var ds = a.appDates && a.appDates[key] && a.appDates[key][p];
+      var months = null;
+      if(ds){ months = Math.floor((today - new Date(ds)) / (1000*60*60*24*30)); }
+      var primeTag = (months !== null && months >= 6) ? ' <span style="font-size:9px;background:#fdf4e7;color:#8a6010;border-radius:99px;padding:1px 5px;border:1px solid #e0c070">&#127942; '+months+'m</span>' : '';
+      return '<div class="app-plan-row"><span style="color:var(--text2)">'+p+primeTag+'</span><span style="font-weight:700">'+n+' - '+fmt(n*price)+'/m</span></div>';
+    }).join('');
+    return '<div class="app-box"><div class="app-box-name">'+app.name+'</div>'+planRows+'</div>';
+  }).join('');
+
+  var dealsHTML = aDeals.length ? '<div style="margin-top:16px"><div style="font-family:Playfair Display,serif;font-size:13px;color:var(--accent);margin-bottom:8px;font-weight:600">Affaires en cours</div>'+
+    aDeals.map(function(d){
+      return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;margin-bottom:7px">'+
+        '<div style="font-weight:600;font-size:12.5px;margin-bottom:5px">'+d.title+'</div>'+
+        '<div style="display:flex;justify-content:space-between">'+stageBadge(d.stage)+'<span style="font-family:Playfair Display,serif;font-size:15px;color:var(--accent)">'+fmt(d.value)+'</span></div></div>';
+    }).join('')+'</div>' : '';
+
+  var histHTML = (a.history||[]).slice().reverse().map(function(h){
+    return '<div class="hist-item"><div class="hist-dot"></div><div><div style="font-size:12.5px">'+h.text+'</div><div style="font-size:10.5px;color:var(--text3)">'+fmtDate(h.date)+'</div></div></div>';
+  }).join('');
+
+  var tagsHTML = a.tags ? a.tags.split(',').filter(Boolean).map(function(t){ return '<span class="tag-pill">'+t.trim()+'</span>'; }).join('') : '';
+
+  panel.innerHTML = '<div class="d-hdr"><span style="font-family:Playfair Display,serif;font-size:16px;color:var(--accent);font-weight:600">Fiche agence</span>'+
+    '<button style="background:none;border:none;color:var(--text3);font-size:19px;cursor:pointer" onclick="document.getElementById(\'detailPanel\').classList.add(\'hidden\')">&#10005;</button></div>'+
+    '<div style="text-align:center;margin-bottom:16px">'+ava(a.name,56)+
+    '<div style="font-weight:700;font-size:16px;margin-top:9px">'+a.name+'</div>'+
+    '<div style="color:var(--text2);font-size:12.5px;margin-bottom:7px">'+a.contact+' - '+a.email+'</div>'+
+    '<div style="display:flex;justify-content:center;gap:6px">'+platBadge(a.platform)+' '+badge(a.status,STATUS_CFG[a.status]||STATUS_CFG.Prospect)+'</div></div>'+
+    '<div class="d-field"><div class="d-label">Telephone</div><div class="d-val">'+(a.phone||'--')+'</div></div>'+
+    '<div class="d-field"><div class="d-label">CA estime</div><div class="d-val">'+fmt(a.ca||0)+'</div></div>'+
+    '<div class="d-field"><div class="d-label">Collaborateurs</div><div class="d-val">'+(a.employees||'--')+'</div></div>'+
+    '<div class="d-field"><div class="d-label">Dernier contact</div><div class="d-val">'+fmtDate(a.lastContact)+'</div></div>'+
+    (tagsHTML ? '<div class="d-field"><div class="d-label">Tags</div><div style="margin-top:4px">'+tagsHTML+'</div></div>' : '')+
+    (a.notes ? '<div class="d-field"><div class="d-label">Notes</div><div class="d-val" style="white-space:pre-wrap;font-size:12.5px">'+a.notes+'</div></div>' : '')+
+    (subsHTML ? '<div style="margin-top:14px"><div style="font-family:Playfair Display,serif;font-size:13px;color:var(--accent);margin-bottom:8px;font-weight:600">Abonnements apps</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">'+subsHTML+'</div></div>' : '')+
+    dealsHTML+
+    '<div style="margin-top:14px"><div style="font-family:Playfair Display,serif;font-size:13px;color:var(--accent);margin-bottom:8px;font-weight:600">Historique</div>'+
+    histHTML+
+    '<div style="display:flex;gap:8px;margin-top:10px">'+
+    '<input id="newHist" class="finput" placeholder="Ajouter un echange..." style="font-size:12px;padding:7px 11px">'+
+    '<button class="btn btn-p btn-sm" onclick="addHistory('+a.id+')">+</button></div></div>'+
+    '<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">'+
+    '<button class="btn btn-sm btn-s" onclick="openEditAgence('+a.id+')">Modifier</button>'+
+    '<button class="btn btn-sm btn-p" onclick="openAddRdvFor('+a.id+')">Nouveau RDV</button>'+
+    '<button class="btn btn-sm btn-g" onclick="openAddDealFor('+a.id+')">+ Affaire</button></div>';
+}
+
+function addHistory(agId){
+  var txt = document.getElementById('newHist').value.trim();
+  if(!txt) return;
+  var a = DB.agences.find(function(x){ return x.id === agId; });
+  if(!a) return;
+  if(!a.history) a.history = [];
+  a.history.push({date:new Date().toISOString().slice(0,10), text:txt});
+  a.lastContact = new Date().toISOString().slice(0,10);
+  saveRender(); openDetail(agId); toast('Echange ajoute');
+}
+
+function deleteAgence(id){
+  if(!confirm('Supprimer cette agence ?')) return;
+  DB.agences = DB.agences.filter(function(a){ return a.id !== id; });
+  document.getElementById('detailPanel').classList.add('hidden');
+  saveRender(); toast('Agence supprimee');
+}
+
+// ============================================================
+// AGENCE FORM
+// ============================================================
+function agenceFormHTML(a){
+  var v = function(f,def){ return a ? (a[f] !== undefined ? a[f] : def||'') : (def||''); };
+  var ck = function(app){ return a && (a.apps||[]).indexOf(app) >= 0 ? 'checked' : ''; };
+  var sv = function(app,plan){ return a && a.appSubs && a.appSubs[app] ? (a.appSubs[app][plan]||0) : 0; };
+  var sd = function(app,plan){ return a && a.appDates && a.appDates[app] ? (a.appDates[app][plan]||'') : ''; };
+  var edit = !!a;
+
+  var statOpts = Object.keys(STATUS_CFG).map(function(s){
+    return '<option'+(v('status')===s?' selected':'')+'>'+s+'</option>';
+  }).join('');
+
+  var platOpts = ['shopify','wix','both'].map(function(p){
+    return '<option value="'+p+'"'+(v('platform')===p?' selected':'')+'>'+p+'</option>';
+  }).join('');
+
+  var hexPlans = ['Basic','Grow','Advanced','Plus'].map(function(p){
+    return '<div><label class="flabel">'+p+' ('+getPrice('hexaship',p)+'EUR/m)</label>'+
+      '<input class="finput" id="hs_'+p+'" type="number" min="0" value="'+sv('hexaship',p)+'" style="padding:6px 10px;margin-bottom:4px">'+
+      '<input class="finput" id="hs_d_'+p+'" type="date" value="'+sd('hexaship',p)+'" style="padding:5px 8px;font-size:11px" title="Date demarrage"></div>';
+  }).join('');
+
+  return '<div class="modal"><div class="modal-title">'+(edit?'Modifier':'Nouvelle')+' agence</div>'+
+    '<div class="fsec">Informations generales</div>'+
+    '<div class="two-col">'+
+    '<div class="frow"><label class="flabel">Nom agence *</label><input class="finput" id="ag_n" value="'+v('name')+'"></div>'+
+    '<div class="frow"><label class="flabel">Contact principal</label><input class="finput" id="ag_ct" value="'+v('contact')+'"></div>'+
+    '</div>'+
+    '<div class="two-col">'+
+    '<div class="frow"><label class="flabel">Email</label><input class="finput" id="ag_e" type="email" value="'+v('email')+'"></div>'+
+    '<div class="frow"><label class="flabel">Telephone</label><input class="finput" id="ag_ph" value="'+v('phone')+'"></div>'+
+    '</div>'+
+    '<div class="three-col">'+
+    '<div class="frow"><label class="flabel">Plateforme</label><select class="fsel2" id="ag_pl">'+platOpts+'</select></div>'+
+    '<div class="frow"><label class="flabel">Statut</label><select class="fsel2" id="ag_st">'+statOpts+'</select></div>'+
+    '<div class="frow"><label class="flabel">CA estime (EUR)</label><input class="finput" id="ag_ca" type="number" value="'+v('ca',0)+'"></div>'+
+    '</div>'+
+    '<div class="two-col">'+
+    '<div class="frow"><label class="flabel">Nb collaborateurs</label><input class="finput" id="ag_em" type="number" value="'+v('employees','')+'"></div>'+
+    '<div class="frow"><label class="flabel">Tags</label><input class="finput" id="ag_tg" value="'+v('tags','')+'" placeholder="VIP, Chaud..."></div>'+
+    '</div>'+
+    '<div class="frow"><label class="flabel">Notes</label><textarea class="ftxt" id="ag_nt">'+v('notes','')+'</textarea></div>'+
+    '<div class="fsec">Apps et abonnements clients</div>'+
+    '<div style="background:var(--shopify-bg);border:1px solid var(--shopify-b);border-radius:var(--rs);padding:14px;margin-bottom:10px">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><input type="checkbox" id="ck_hs" '+ck('hexaship')+' style="accent-color:#4a7010">'+
+    '<label for="ck_hs" style="font-weight:700;font-size:13px;color:#4a7010;cursor:pointer">Hexaship (Shopify - Logistique)</label></div>'+
+    '<div style="font-size:11px;color:var(--text3);margin-bottom:7px">Nb clients par plan + date demarrage :</div>'+
+    '<div class="four-col">'+hexPlans+'</div></div>'+
+    '<div style="background:var(--wix-bg);border:1px solid var(--wix-b);border-radius:var(--rs);padding:14px;margin-bottom:10px">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><input type="checkbox" id="ck_sv" '+ck('survey')+' style="accent-color:#0c6ebd">'+
+    '<label for="ck_sv" style="font-weight:700;font-size:13px;color:#0c6ebd;cursor:pointer">Survey App (Wix - Sondages)</label></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:320px">'+
+    '<div><label class="flabel">Nb clients ('+getPrice('survey','Unique')+'EUR/m)</label><input class="finput" id="sv_U" type="number" min="0" value="'+sv('survey','Unique')+'" style="padding:6px 10px"></div>'+
+    '<div><label class="flabel">Date demarrage</label><input class="finput" id="sv_d" type="date" value="'+sd('survey','Unique')+'" style="padding:5px 8px;font-size:11px"></div>'+
+    '</div></div>'+
+    '<div style="background:var(--wix-bg);border:1px solid var(--wix-b);border-radius:var(--rs);padding:14px">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><input type="checkbox" id="ck_pn" '+ck('panier')+' style="accent-color:#0c6ebd">'+
+    '<label for="ck_pn" style="font-weight:700;font-size:13px;color:#0c6ebd;cursor:pointer">Abandon Panier (Wix)</label></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:320px">'+
+    '<div><label class="flabel">Nb clients ('+getPrice('panier','Unique')+'EUR/m)</label><input class="finput" id="pn_U" type="number" min="0" value="'+sv('panier','Unique')+'" style="padding:6px 10px"></div>'+
+    '<div><label class="flabel">Date demarrage</label><input class="finput" id="pn_d" type="date" value="'+sd('panier','Unique')+'" style="padding:5px 8px;font-size:11px"></div>'+
+    '</div></div>'+
+    '<div class="modal-actions">'+
+    '<button class="btn btn-s" onclick="closeModal()">Annuler</button>'+
+    '<button class="btn btn-p" onclick="'+(edit?'saveEditAgence('+a.id+')':'saveAgence()')+'">'+( edit?'Enregistrer':'Creer')+'</button>'+
+    '</div></div>';
+}
+
+function readAgenceForm(existing){
+  var apps = [], appSubs = emptyAppSubs(), appDates = emptyAppDates();
+  if(document.getElementById('ck_hs').checked){
+    apps.push('hexaship');
+    ['Basic','Grow','Advanced','Plus'].forEach(function(p){
+      appSubs.hexaship[p] = parseInt(document.getElementById('hs_'+p).value)||0;
+      appDates.hexaship[p] = document.getElementById('hs_d_'+p).value||'';
+    });
+  }
+  if(document.getElementById('ck_sv').checked){
+    apps.push('survey');
+    appSubs.survey.Unique = parseInt(document.getElementById('sv_U').value)||0;
+    appDates.survey.Unique = document.getElementById('sv_d').value||'';
+  }
+  if(document.getElementById('ck_pn').checked){
+    apps.push('panier');
+    appSubs.panier.Unique = parseInt(document.getElementById('pn_U').value)||0;
+    appDates.panier.Unique = document.getElementById('pn_d').value||'';
+  }
+  return {
+    name:document.getElementById('ag_n').value.trim(),
+    contact:document.getElementById('ag_ct').value.trim(),
+    email:document.getElementById('ag_e').value.trim(),
+    phone:document.getElementById('ag_ph').value.trim(),
+    platform:document.getElementById('ag_pl').value,
+    status:document.getElementById('ag_st').value,
+    ca:Number(document.getElementById('ag_ca').value)||0,
+    employees:Number(document.getElementById('ag_em').value)||0,
+    tags:document.getElementById('ag_tg').value.trim(),
+    notes:document.getElementById('ag_nt').value.trim(),
+    apps:apps, appSubs:appSubs, appDates:appDates,
+    lastContact:existing?existing.lastContact:new Date().toISOString().slice(0,10),
+    history:existing?existing.history:[]
+  };
+}
+
+function openAddAgence(){ openModal(agenceFormHTML(null)); }
+function openEditAgence(id){ var a = DB.agences.find(function(x){ return x.id===id; }); if(a) openModal(agenceFormHTML(a)); }
+
+function saveAgence(){
+  var o = readAgenceForm(null);
+  if(!o.name){ alert('Nom requis'); return; }
+  o.id = nextId(DB.agences);
+  o.history = [{date:new Date().toISOString().slice(0,10), text:'Agence creee dans le CRM'}];
+  DB.agences.unshift(o);
+  closeModal(); saveRender(); toast('Agence creee');
+}
+function saveEditAgence(id){
+  var ex = DB.agences.find(function(x){ return x.id===id; });
+  var o = readAgenceForm(ex);
+  if(!o.name){ alert('Nom requis'); return; }
+  Object.assign(ex, o);
+  closeModal(); saveRender(); toast('Agence mise a jour');
+}
+
+// ============================================================
+// PIPELINE
+// ============================================================
+function pgPipeline(){
+  var cols = STAGES.map(function(stage){
+    var sd = DB.deals.filter(function(d){ return d.stage === stage; });
+    var tot = sd.reduce(function(s,d){ return s+d.value; }, 0);
+    var c = STAGE_COLORS[stage];
+    var cards = sd.map(function(d){
+      var ag = DB.agences.find(function(a){ return a.id === d.agenceId; });
+      return '<div class="deal-card" style="border-left-color:'+c+'">'+
+        '<div style="font-weight:600;font-size:13px;margin-bottom:7px">'+d.title+'</div>'+
+        (ag ? '<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-bottom:8px">'+ava(ag.name,18)+'<span>'+ag.name+'</span></div>' : '')+
+        (d.app ? '<div style="margin-bottom:6px">'+appBadge(d.app)+'</div>' : '')+
+        '<div style="display:flex;justify-content:space-between"><span style="font-family:Playfair Display,serif;font-size:16px;color:var(--accent)">'+fmt(d.value)+'</span><span style="font-size:11px;color:var(--text3)">'+d.probability+'%</span></div>'+
+        '<div class="prob-bar"><div class="prob-fill" style="width:'+d.probability+'%;background:'+c+'"></div></div>'+
+        '<div style="font-size:10.5px;color:var(--text3);margin-top:5px">Cloture : '+fmtDate(d.closeDate)+'</div>'+
+        '<div style="margin-top:8px;display:flex;gap:5px">'+
+        '<button class="btn btn-sm btn-s" onclick="openEditDeal('+d.id+')">&#9999;</button>'+
+        '<button class="btn btn-sm btn-d" onclick="deleteDeal('+d.id+')">&#10005;</button></div></div>';
+    }).join('');
+    return '<div class="k-col">'+
+      '<div class="k-hdr"><div class="k-dot" style="background:'+c+'"></div>'+
+      '<span class="k-label">'+STAGE_LABELS[stage]+'</span>'+
+      '<span class="k-total">'+fmt(tot)+'</span></div>'+
+      cards+'</div>';
+  }).join('');
+
+  return '<div class="page"><div style="display:flex;justify-content:flex-end;margin-bottom:14px"><button class="btn btn-p" onclick="openAddDeal()">+ Nouvelle affaire</button></div><div class="kanban">'+cols+'</div></div>';
+}
+
+function deleteDeal(id){
+  if(!confirm('Supprimer ?')) return;
+  DB.deals = DB.deals.filter(function(d){ return d.id !== id; });
+  saveRender(); toast('Affaire supprimee');
+}
+
+function dealFormHTML(d){
+  var v = function(f,def){ return d ? (d[f]!==undefined?d[f]:def||'') : (def||''); };
+  var agOpts = '<option value="">-- Selectionner --</option>'+DB.agences.map(function(a){ return '<option value="'+a.id+'"'+(d&&d.agenceId===a.id?' selected':'')+'>'+a.name+'</option>'; }).join('');
+  var appOpts = Object.keys(APPS).map(function(k){ return '<option value="'+k+'"'+(d&&d.app===k?' selected':'')+'>'+APPS[k].name+'</option>'; }).join('');
+  var stageOpts = STAGES.map(function(s){ return '<option value="'+s+'"'+(d&&d.stage===s?' selected':'')+'>'+STAGE_LABELS[s]+'</option>'; }).join('');
+  var edit = !!d;
+  return '<div class="modal"><div class="modal-title">'+(edit?'Modifier':'Nouvelle')+' affaire</div>'+
+    '<div class="frow"><label class="flabel">Titre *</label><input class="finput" id="d_t" value="'+v('title')+'"></div>'+
+    '<div class="two-col">'+
+    '<div class="frow"><label class="flabel">Agence</label><select class="fsel2" id="d_ag">'+agOpts+'</select></div>'+
+    '<div class="frow"><label class="flabel">App concernee</label><select class="fsel2" id="d_ap">'+appOpts+'</select></div>'+
+    '</div>'+
+    '<div class="two-col">'+
+    '<div class="frow"><label class="flabel">Valeur annuelle (EUR)</label><input class="finput" id="d_v" type="number" value="'+v('value',0)+'"></div>'+
+    '<div class="frow"><label class="flabel">Etape</label><select class="fsel2" id="d_s">'+stageOpts+'</select></div>'+
+    '</div>'+
+    '<div class="two-col">'+
+    '<div class="frow"><label class="flabel">Probabilite (%)</label><input class="finput" id="d_p" type="number" value="'+v('probability',30)+'"></div>'+
+    '<div class="frow"><label class="flabel">Date cloture</label><input class="finput" id="d_d" type="date" value="'+v('closeDate','')+'"></div>'+
+    '</div>'+
+    '<div class="frow"><label class="flabel">Notes</label><textarea class="ftxt" id="d_n">'+v('notes','')+'</textarea></div>'+
+    '<div class="modal-actions"><button class="btn btn-s" onclick="closeModal()">Annuler</button>'+
+    '<button class="btn btn-p" onclick="'+(edit?'updateDeal('+d.id+')':'saveDeal()')+'">'+(edit?'Enregistrer':'Creer')+'</button></div></div>';
+}
+
+function openAddDeal(){ openModal(dealFormHTML(null)); }
+function openAddDealFor(agId){ openModal(dealFormHTML(null)); setTimeout(function(){ var s=document.getElementById('d_ag'); if(s) s.value=agId; },50); }
+function openEditDeal(id){ var d=DB.deals.find(function(x){return x.id===id;}); if(d) openModal(dealFormHTML(d)); }
+
+function saveDeal(){
+  var title = document.getElementById('d_t').value.trim();
+  if(!title){ alert('Titre requis'); return; }
+  DB.deals.unshift({id:nextId(DB.deals),title:title,agenceId:Number(document.getElementById('d_ag').value)||null,app:document.getElementById('d_ap').value,value:Number(document.getElementById('d_v').value)||0,stage:document.getElementById('d_s').value,probability:Number(document.getElementById('d_p').value)||0,closeDate:document.getElementById('d_d').value,notes:document.getElementById('d_n').value.trim()});
+  closeModal(); saveRender(); toast('Affaire creee');
+}
+function updateDeal(id){
+  var d = DB.deals.find(function(x){return x.id===id;});
+  if(!d) return;
+  d.title=document.getElementById('d_t').value.trim();
+  d.agenceId=Number(document.getElementById('d_ag').value)||null;
+  d.app=document.getElementById('d_ap').value;
+  d.value=Number(document.getElementById('d_v').value)||0;
+  d.stage=document.getElementById('d_s').value;
+  d.probability=Number(document.getElementById('d_p').value)||0;
+  d.closeDate=document.getElementById('d_d').value;
+  d.notes=document.getElementById('d_n').value.trim();
+  closeModal(); saveRender(); toast('Affaire mise a jour');
+}
+
+// ============================================================
+// RDV
+// ============================================================
+function pgRdv(){
+  var upcoming = DB.rdvs.filter(function(r){return !r.done;}).sort(function(a,b){return a.date>b.date?1:-1;});
+  var done = DB.rdvs.filter(function(r){return r.done;});
+  var sel = DB.rdvs.filter(function(r){return r.exportCal;}).length;
+
+  var upRows = upcoming.length === 0 ? '<div style="text-align:center;padding:44px;color:var(--text3)">Aucun RDV a venir</div>' :
+    upcoming.map(function(r){
+      var ag = DB.agences.find(function(a){return a.id===r.agenceId;});
+      var isPrime = r.isPrime;
+      var typeBadge = '<span style="display:inline-block;padding:2px 9px;border-radius:99px;font-size:10px;background:'+(isPrime?'#fdf4e7':'var(--accent-lt)')+';color:'+(isPrime?'#8a6010':'var(--accent)')+';border:1px solid '+(isPrime?'#e0c070':'#c0d4f0')+'">'+r.type+'</span>';
+      return '<div class="rdv-item">'+
+        '<input type="checkbox" class="rdv-chk" '+(r.exportCal?'checked':'')+' onchange="toggleCal('+r.id+',this.checked)">'+
+        '<span style="font-size:19px;margin-top:2px">&#128197;</span>'+
+        '<div style="flex:1"><div style="font-size:13px;font-weight:600;margin-bottom:3px">'+r.note+'</div>'+
+        '<div style="font-size:11px;color:var(--text3)">'+(ag?ag.name:'--')+' - '+r.type+' - '+fmtDate(r.date)+(r.heure?' a '+r.heure:'')+'</div></div>'+
+        '<div style="display:flex;gap:6px;align-items:center;flex-shrink:0">'+typeBadge+
+        '<button class="btn btn-sm btn-g" onclick="doneRdv('+r.id+')">Fait</button>'+
+        '<button class="btn btn-sm btn-d" onclick="delRdv('+r.id+')">&#10005;</button></div></div>';
+    }).join('');
+
+  var doneRows = done.length === 0 ? '' :
+    '<div class="card"><div class="card-title" style="color:var(--text3)">RDV passes</div>'+
+    done.map(function(r){
+      var ag = DB.agences.find(function(a){return a.id===r.agenceId;});
+      return '<div class="rdv-item" style="opacity:.55"><span style="font-size:19px">&#9989;</span>'+
+        '<div style="flex:1"><div style="font-size:13px;text-decoration:line-through">'+r.note+'</div>'+
+        '<div style="font-size:11px;color:var(--text3)">'+(ag?ag.name:'--')+' - '+fmtDate(r.date)+'</div></div>'+
+        '<button class="btn btn-sm btn-d" onclick="delRdv('+r.id+')">&#10005;</button></div>';
+    }).join('')+'</div>';
+
+  return '<div class="page">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">'+
+    '<div style="display:flex;gap:8px;align-items:center">'+
+    '<span style="font-size:12px;color:var(--text2)">'+sel+' RDV selectionnes pour export</span>'+
+    '<button class="btn btn-sm btn-cal" onclick="exportICS()">&#128198; Google Agenda</button></div>'+
+    '<button class="btn btn-p" onclick="openAddRdv()">+ Nouveau RDV</button></div>'+
+    '<div class="card"><div class="card-title">A venir</div>'+upRows+'</div>'+
+    doneRows+'</div>';
+}
+
+function toggleCal(id, val){
+  var r = DB.rdvs.find(function(x){return x.id===id;});
+  if(r){ r.exportCal = val; saveRender(); }
+}
+function doneRdv(id){
+  var r = DB.rdvs.find(function(x){return x.id===id;});
+  if(r){ r.done=true; r.exportCal=false; saveRender(); toast('RDV marque comme fait'); }
+}
+function delRdv(id){
+  if(!confirm('Supprimer ?')) return;
+  DB.rdvs = DB.rdvs.filter(function(r){return r.id!==id;});
+  saveRender(); toast('RDV supprime');
+}
+
+function rdvFormHTML(agId){
+  var agOpts = '<option value="">-- Selectionner --</option>'+DB.agences.map(function(a){ return '<option value="'+a.id+'"'+(agId===a.id?' selected':'')+'>'+a.name+'</option>'; }).join('');
+  return '<div class="modal"><div class="modal-title">Nouveau rendez-vous</div>'+
+    '<div class="two-col">'+
+    '<div class="frow"><label class="flabel">Type</label><select class="fsel2" id="r_ty"><option>Demo</option><option>Reunion</option><option>Appel</option><option>Presentation</option><option>Suivi</option></select></div>'+
+    '<div class="frow"><label class="flabel">Agence</label><select class="fsel2" id="r_ag">'+agOpts+'</select></div>'+
+    '</div>'+
+    '<div class="frow"><label class="flabel">Contact rencontre</label><input class="finput" id="r_co" placeholder="Nom du contact"></div>'+
+    '<div class="frow"><label class="flabel">Objet / Notes *</label><textarea class="ftxt" id="r_no" placeholder="Objet du RDV..."></textarea></div>'+
+    '<div class="two-col">'+
+    '<div class="frow"><label class="flabel">Date *</label><input class="finput" id="r_dt" type="date"></div>'+
+    '<div class="frow"><label class="flabel">Heure</label><input class="finput" id="r_he" type="time"></div>'+
+    '</div>'+
+    '<div class="frow" style="display:flex;align-items:center;gap:10px;margin-top:4px">'+
+    '<input type="checkbox" id="r_cal" style="accent-color:var(--accent);width:16px;height:16px">'+
+    '<label for="r_cal" style="font-size:13px;cursor:pointer;color:var(--text2)">Ajouter a la selection Google Agenda</label></div>'+
+    '<div class="modal-actions"><button class="btn btn-s" onclick="closeModal()">Annuler</button><button class="btn btn-p" onclick="saveRdv()">Creer le RDV</button></div></div>';
+}
+
+function openAddRdv(){ openModal(rdvFormHTML(null)); }
+function openAddRdvFor(agId){ openModal(rdvFormHTML(agId)); }
+
+function saveRdv(){
+  var note = document.getElementById('r_no').value.trim();
+  var date = document.getElementById('r_dt').value;
+  if(!note||!date){ alert('Notes et date requis'); return; }
+  var agId = Number(document.getElementById('r_ag').value)||null;
+  DB.rdvs.unshift({id:nextId(DB.rdvs),type:document.getElementById('r_ty').value,agenceId:agId,contact:document.getElementById('r_co').value.trim(),note:note,date:date,heure:document.getElementById('r_he').value,done:false,exportCal:document.getElementById('r_cal').checked});
+  if(agId){
+    var ag = DB.agences.find(function(a){return a.id===agId;});
+    if(ag){ if(!ag.history) ag.history=[]; ag.history.push({date:date,text:'RDV planifie : '+document.getElementById('r_ty').value+' - '+note}); ag.lastContact=date; }
+  }
+  closeModal(); saveRender(); toast('RDV cree');
+}
+
+// ============================================================
+// REVENUS
+// ============================================================
+function pgRevenus(){
+  var appKeys = Object.keys(APPS);
+
+  var statCards = appKeys.map(function(key){
+    var app = APPS[key];
+    var totalSubs = DB.agences.reduce(function(s,ag){ return s + Object.keys(ag.appSubs&&ag.appSubs[key]?ag.appSubs[key]:{}).reduce(function(x,p){ return x+(ag.appSubs[key][p]||0); },0); }, 0);
+    var rev = DB.agences.reduce(function(s,ag){ return s + Object.keys(ag.appSubs&&ag.appSubs[key]?ag.appSubs[key]:{}).reduce(function(x,p){ return x+getPrice(key,p)*(ag.appSubs[key][p]||0); },0); }, 0);
+    return '<div class="stat-card" style="border-top-color:'+app.color+'">'+
+      '<div style="font-size:11px;font-weight:700;color:'+app.color+';margin-bottom:6px">'+app.name+' - '+(app.plat==='shopify'?'Shopify':'Wix')+'</div>'+
+      '<div style="font-family:Playfair Display,serif;font-size:24px;color:var(--accent)">'+totalSubs+' <span style="font-size:13px;font-family:Inter;color:var(--text3)">abonnements</span></div>'+
+      '<div style="font-size:13px;font-weight:700;color:var(--green);margin-top:6px">'+fmt(rev)+'<span style="font-size:11px;font-weight:400;color:var(--text3)">/mois</span></div></div>';
+  }).join('');
+
+  var rows = DB.agences.map(function(ag){
+    var agTotal = 0;
+    var cells = appKeys.map(function(key){
+      var count = Object.keys(ag.appSubs&&ag.appSubs[key]?ag.appSubs[key]:{}).reduce(function(s,p){return s+(ag.appSubs[key][p]||0);},0);
+      var rev = Object.keys(ag.appSubs&&ag.appSubs[key]?ag.appSubs[key]:{}).reduce(function(s,p){return s+getPrice(key,p)*(ag.appSubs[key][p]||0);},0);
+      agTotal += rev;
+      return '<td style="text-align:center"><span style="font-weight:600">'+count+'</span><br><span style="font-size:10px;color:var(--text3)">'+(count?fmt(rev)+'/mois':'--')+'</span></td>';
+    }).join('');
+    return '<tr><td><div style="display:flex;align-items:center;gap:9px">'+ava(ag.name,26)+
+      '<div><div style="font-weight:600;font-size:12.5px">'+ag.name+'</div>'+platBadge(ag.platform)+'</div></div></td>'+
+      cells+'<td style="text-align:right"><strong style="font-family:Playfair Display,serif;color:var(--accent)">'+fmt(agTotal)+'<span style="font-size:10px;font-family:Inter;font-weight:400;color:var(--text3)">/mois</span></strong></td></tr>';
+  }).join('');
+
+  var grandTotal = DB.agences.reduce(function(s,ag){
+    return s + appKeys.reduce(function(x,key){ return x + Object.keys(ag.appSubs&&ag.appSubs[key]?ag.appSubs[key]:{}).reduce(function(y,p){return y+getPrice(key,p)*(ag.appSubs[key][p]||0);},0); }, 0);
+  }, 0);
+
+  var totCells = appKeys.map(function(key){
+    var total = DB.agences.reduce(function(s,ag){return s+Object.keys(ag.appSubs&&ag.appSubs[key]?ag.appSubs[key]:{}).reduce(function(x,p){return x+(ag.appSubs[key][p]||0);},0);},0);
+    var rev = DB.agences.reduce(function(s,ag){return s+Object.keys(ag.appSubs&&ag.appSubs[key]?ag.appSubs[key]:{}).reduce(function(x,p){return x+getPrice(key,p)*(ag.appSubs[key][p]||0);},0);},0);
+    return '<td style="text-align:center;background:var(--accent-lt)"><strong>'+total+'</strong><br><span style="font-size:10px;color:var(--accent)">'+fmt(rev)+'/mois</span></td>';
+  }).join('');
+
+  var thCells = appKeys.map(function(k){ return '<th style="text-align:center">'+APPS[k].name+'</th>'; }).join('');
+
+  return '<div class="page">'+
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:18px">'+statCards+'</div>'+
+    '<div class="card" style="padding:0;overflow:hidden">'+
+    '<div style="padding:16px 20px 0;font-family:Playfair Display,serif;font-size:15px;color:var(--accent);font-weight:600">Abonnements par agence</div>'+
+    '<div class="table-wrap"><table>'+
+    '<thead><tr><th>Agence</th>'+thCells+'<th style="text-align:right">Total MRR</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody>'+
+    '<tfoot><tr style="background:var(--surface2)"><td style="font-weight:700;font-size:12px">TOTAL</td>'+totCells+
+    '<td style="text-align:right"><strong style="font-family:Playfair Display,serif;font-size:18px;color:var(--accent)">'+fmt(grandTotal)+'<span style="font-size:10px;font-family:Inter;font-weight:400;color:var(--text3)">/mois</span></strong></td></tr></tfoot>'+
+    '</table></div></div>'+
+    '<div style="font-size:11px;color:var(--text3);margin-top:8px">Tarifs modifiables dans Configuration sans toucher au code.</div></div>';
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+function pgConfig(){
+  var p = DB.config.prices || {};
+  var priceHex = ['Basic','Grow','Advanced','Plus'].map(function(pl){
+    return '<div class="frow" style="margin-bottom:0"><label class="flabel">'+pl+'</label>'+
+      '<div style="display:flex;align-items:center;gap:4px"><input class="cfg-input" id="price_hs_'+pl+'" type="number" min="0" value="'+(p.hexaship&&p.hexaship[pl]||0)+'" style="padding:6px 10px"><span style="font-size:12px;color:var(--text3)">EUR</span></div></div>';
+  }).join('');
+
+  return '<div class="page">'+
+    '<div style="background:var(--accent-lt);border:1px solid #c0d4f0;border-radius:var(--r);padding:18px;margin-bottom:16px">'+
+    '<div style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:10px">Supabase - Synchronisation temps reel</div>'+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'+
+    '<div class="dot" id="cfgDot"></div><span id="cfgTxt" style="font-size:13px;font-weight:600;color:var(--accent)">Verification...</span></div>'+
+    '<div style="background:var(--surface2);border-radius:var(--rs);padding:12px;font-size:12px;color:var(--text2);line-height:1.8">'+
+    '<div>URL : https://pmynkoxjsswozccaozjc.supabase.co</div>'+
+    '<div>Partage : envoyez votre URL GitHub Pages aux membres de votre equipe</div>'+
+    '<div>Sync : automatique a chaque modification</div></div>'+
+    '<div style="margin-top:12px;display:flex;gap:10px">'+
+    '<button class="btn btn-p" onclick="forceSync()">Forcer la synchronisation</button>'+
+    '<button class="btn btn-s" onclick="saveConfig()">Enregistrer tarifs et primes</button></div></div>'+
+
+    '<div class="card"><div class="card-title">Tarifs mensuels des apps</div>'+
+    '<p style="font-size:12.5px;color:var(--text2);margin-bottom:14px">Modifiez les tarifs ici - mis a jour partout dans le CRM.</p>'+
+    '<div style="background:var(--shopify-bg);border:1px solid var(--shopify-b);border-radius:var(--rs);padding:14px;margin-bottom:10px">'+
+    '<div style="font-weight:700;font-size:13px;color:var(--shopify-c);margin-bottom:10px">Hexaship - Shopify (EUR/mois par client)</div>'+
+    '<div class="four-col">'+priceHex+'</div></div>'+
+    '<div style="background:var(--wix-bg);border:1px solid var(--wix-b);border-radius:var(--rs);padding:14px;margin-bottom:10px">'+
+    '<div style="font-weight:700;font-size:13px;color:var(--wix-c);margin-bottom:10px">Survey App - Wix (EUR/mois)</div>'+
+    '<div style="max-width:200px"><div class="frow" style="margin-bottom:0"><label class="flabel">Plan Unique</label>'+
+    '<div style="display:flex;align-items:center;gap:4px"><input class="cfg-input" id="price_sv_U" type="number" min="0" value="'+(p.survey&&p.survey.Unique||0)+'" style="padding:6px 10px"><span style="font-size:12px;color:var(--text3)">EUR</span></div></div></div></div>'+
+    '<div style="background:var(--wix-bg);border:1px solid var(--wix-b);border-radius:var(--rs);padding:14px">'+
+    '<div style="font-weight:700;font-size:13px;color:var(--wix-c);margin-bottom:10px">Abandon Panier - Wix (EUR/mois)</div>'+
+    '<div style="max-width:200px"><div class="frow" style="margin-bottom:0"><label class="flabel">Plan Unique</label>'+
+    '<div style="display:flex;align-items:center;gap:4px"><input class="cfg-input" id="price_pn_U" type="number" min="0" value="'+(p.panier&&p.panier.Unique||0)+'" style="padding:6px 10px"><span style="font-size:12px;color:var(--text3)">EUR</span></div></div></div></div></div>'+
+
+    '<div class="prime-box"><div style="font-family:Playfair Display,serif;font-size:15px;color:#8a6010;font-weight:600;margin-bottom:10px">Prime agences - fidelite 6 mois</div>'+
+    '<p style="font-size:12.5px;color:#a08030;margin-bottom:14px;line-height:1.6">Un rappel est genere automatiquement sur le tableau de bord et dans les RDV des qu\'un client atteint 6 mois.</p>'+
+    '<div style="max-width:260px"><div class="frow"><label class="flabel">Montant prime par client (EUR)</label>'+
+    '<div style="display:flex;align-items:center;gap:8px"><input class="cfg-input" id="cfg_prime" type="number" min="0" value="'+getPrimeAmount()+'" style="padding:8px 13px"><span style="font-size:13px;color:var(--text2)">EUR / client</span></div></div></div>'+
+    '<button class="btn btn-sm" style="background:#fdf4e7;color:#8a6010;border:1px solid #e0c070;margin-top:10px" onclick="resetPrimes()">Reinitialiser les primes versees</button></div>'+
+
+    '<div class="card"><div class="card-title">Partager avec votre equipe</div>'+
+    '<ol style="font-size:13px;color:var(--text2);line-height:2.2;padding-left:18px">'+
+    '<li>Copiez votre URL GitHub Pages</li>'+
+    '<li>Envoyez-la a vos collegues</li>'+
+    '<li>Ils ouvrent le lien dans leur navigateur</li>'+
+    '<li>Chaque modification est visible par tous en temps reel</li>'+
+    '<li>Aucune installation requise - Mac, PC, mobile</li></ol></div></div>';
+}
+
+function saveConfig(){
+  DB.config.prices = {
+    hexaship:{
+      Basic:Number(document.getElementById('price_hs_Basic').value)||0,
+      Grow:Number(document.getElementById('price_hs_Grow').value)||0,
+      Advanced:Number(document.getElementById('price_hs_Advanced').value)||0,
+      Plus:Number(document.getElementById('price_hs_Plus').value)||0
+    },
+    survey:{Unique:Number(document.getElementById('price_sv_U').value)||0},
+    panier:{Unique:Number(document.getElementById('price_pn_U').value)||0}
+  };
+  DB.config.primeAmount = Number(document.getElementById('cfg_prime').value)||0;
+  saveRender(); toast('Configuration enregistree');
+}
+
+async function forceSync(){
+  if(!supa){ toast('Supabase non initialise',false); return; }
+  toast('Synchronisation en cours...');
+  var ok = await loadSupa();
+  if(ok){ injectPrimes(); render(); toast('Donnees synchronisees avec Supabase'); }
+  else toast('Impossible de joindre Supabase', false);
+}
+
+// ============================================================
+// EXPORT EXCEL
+// ============================================================
+function exportExcel(){
+  var wb = XLSX.utils.book_new();
+  var agRows = [['Agence','Contact','Email','Telephone','Plateforme','Statut','CA estime','Collaborateurs','Tags','Apps','Hs Basic','Hs Grow','Hs Advanced','Hs Plus','Survey','Panier','Dernier contact','Notes']];
+  DB.agences.forEach(function(a){
+    var hs = a.appSubs&&a.appSubs.hexaship||{};
+    var sv = a.appSubs&&a.appSubs.survey||{};
+    var pn = a.appSubs&&a.appSubs.panier||{};
+    agRows.push([a.name,a.contact,a.email,a.phone,a.platform,a.status,a.ca,a.employees,a.tags,(a.apps||[]).join(', '),hs.Basic||0,hs.Grow||0,hs.Advanced||0,hs.Plus||0,sv.Unique||0,pn.Unique||0,a.lastContact,a.notes]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(agRows), 'Agences');
+  var dlRows = [['Titre','Agence','App','Valeur','Etape','Probabilite','Date cloture','Notes']];
+  DB.deals.forEach(function(d){ var ag=DB.agences.find(function(x){return x.id===d.agenceId;}); dlRows.push([d.title,ag?ag.name:'',d.app,d.value,d.stage,d.probability,d.closeDate,d.notes]); });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dlRows), 'Pipeline');
+  var rdvRows = [['Type','Agence','Contact','Date','Heure','Note','Statut']];
+  DB.rdvs.forEach(function(r){ var ag=DB.agences.find(function(x){return x.id===r.agenceId;}); rdvRows.push([r.type,ag?ag.name:'',r.contact,r.date,r.heure,r.note,r.done?'Fait':'A venir']); });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rdvRows), 'RDV');
+  XLSX.writeFile(wb, 'BANG_Solution_Trading_CRM.xlsx');
+  toast('Export Excel telecharge');
+}
+
+// ============================================================
+// EXPORT ICS
+// ============================================================
+function exportICS(){
+  var sel = DB.rdvs.filter(function(r){ return r.exportCal && !r.done; });
+  if(!sel.length){ toast('Cochez des RDV a exporter', false); return; }
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function icsDate(d, h){
+    var dt = new Date((d||'2026-01-01') + 'T' + (h||'09:00') + ':00');
+    return dt.getFullYear() + pad(dt.getMonth()+1) + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + pad(dt.getMinutes()) + '00';
+  }
+  var CRLF = '\r\n';
+  var ics = 'BEGIN:VCALENDAR' + CRLF + 'VERSION:2.0' + CRLF + 'PRODID:-//BANG Solution Trading//CRM//FR' + CRLF + 'CALSCALE:GREGORIAN' + CRLF + 'METHOD:PUBLISH' + CRLF;
+  sel.forEach(function(r){
+    var ag = DB.agences.find(function(a){ return a.id === r.agenceId; });
+    var start = icsDate(r.date, r.heure);
+    var endH = r.heure ? String(Number(r.heure.split(':')[0])+1).padStart(2,'0') + ':' + r.heure.split(':')[1] : '10:00';
+    var end = icsDate(r.date, endH);
+    ics += 'BEGIN:VEVENT' + CRLF;
+    ics += 'UID:bang-rdv-' + r.id + '-' + Date.now() + '@bang-solution-trading' + CRLF;
+    ics += 'DTSTART:' + start + CRLF;
+    ics += 'DTEND:' + end + CRLF;
+    ics += 'SUMMARY:[' + r.type + '] ' + r.note + CRLF;
+    ics += 'DESCRIPTION:Agence : ' + (ag?ag.name:'--') + ' / Contact : ' + (r.contact||'--') + CRLF;
+    ics += 'END:VEVENT' + CRLF;
+  });
+  ics += 'END:VCALENDAR';
+  var blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'BANG_RDV_Agenda.ics'; a.click();
+  URL.revokeObjectURL(url);
+  toast(sel.length + ' RDV exportes vers Google Agenda');
+}
+
+// ============================================================
+// JSON BACKUP
+// ============================================================
+function exportJSON(){
+  var blob = new Blob([JSON.stringify(DB,null,2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'BANG_CRM_sauvegarde.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Sauvegarde telechargee');
+}
+
+function importJSON(event){
+  var file = event.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = async function(e){
+    try{
+      var d = JSON.parse(e.target.result);
+      if(d.agences && d.deals){ DB = d; saveLocal(); if(supaOK) await saveSupa(); injectPrimes(); render(); toast('Donnees restaurees'); }
+      else alert('Fichier invalide');
+    } catch(err){ alert('Erreur JSON'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(html){
+  var mc = document.getElementById('MC');
+  mc.innerHTML = '';
+  var bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.onclick = function(e){ if(e.target === bg) closeModal(); };
+  bg.innerHTML = html;
+  mc.appendChild(bg);
+}
+function closeModal(){ document.getElementById('MC').innerHTML = ''; }
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+var hasLocal = loadLocal();
+injectPrimes();
+go('dashboard');
+
+window.addEventListener('load', async function(){
+  var attempts = 0;
+  while(attempts < 8){
+    if(typeof supabase !== 'undefined' && supabase.createClient){ break; }
+    await new Promise(function(r){ setTimeout(r, 400); });
+    attempts++;
+  }
+  if(!initSupa()){ setSyncStatus('err','Hors ligne (local)'); return; }
+  var ok = await loadSupa();
+  if(ok){
+    injectPrimes(); render(); subscribeSupa();
+    // Update config page dot if visible
+    var d = document.getElementById('cfgDot');
+    var t = document.getElementById('cfgTxt');
+    if(d){ d.className = 'dot ok'; }
+    if(t){ t.textContent = 'Connecte et synchronise'; }
+    toast('Connecte a Supabase');
+  } else {
+    setSyncStatus('err','Hors ligne (local)');
+    toast('Mode hors ligne - donnees locales', false);
+  }
+});
+</script>
+</body>
+</html>
